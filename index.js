@@ -10,19 +10,21 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
+const port = 7000;
+
 // Database Connection (Mongodb)
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.g7kps.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
 
 // Add to Database ............
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 client.connect(err => {
-    const volunteersCollection = client.db("volunteer-network").collection("volunteer");
-    const volunteerTasks = client.db("volunteer-network").collection("events");
+    // const volunteersCollection = client.db("volunteer-network").collection("volunteer");
+    const volunteerEvents = client.db("volunteer-network").collection("events");
 
   //addToDatabase.....
   app.post("/addToDatabase", (req, res) => {
     const fields = req.body;
-    fieldsCollection.insertMany(fields).then(result => {
+    volunteerEvents.insertMany(fields).then(result => {
       res.send(result);
       console.log(result.insertedCount);
     });
@@ -31,7 +33,7 @@ client.connect(err => {
   //createNewEvent
   app.post("/createNewEvent", (req, res) => {
     const field = req.body;
-    fieldsCollection.insertOne(field).then(result => {
+    volunteerEvents.insertOne(field).then(result => {
       res.send(result);
       console.log(result.insertedCount);
     });
@@ -39,22 +41,19 @@ client.connect(err => {
 
   //eventFields
   app.get("/eventFields", (req, res) => {
-    fieldsCollection.find({}).toArray((err, documents) => {
+    volunteerEvents.find({}).toArray((err, documents) => {
       res.send(documents);
     });
   });
 });
 
 // events add to mongo ...................
-MongoClient.connect(uri, { useUnifiedTopology: true }, function (err, client) {
-  const productsCollection = client
-    .db(process.env.DB_NAME)
-    .collection(process.env.DB_COLLECTION);
-
+client.connect(err => {
+  const volunteersCollection = client.db("volunteer-network").collection("volunteer");
   //addEvents ......
   app.post("/addEvents", (req, res) => {
     const events = req.body;
-    productsCollection.insertOne(events).then(result => {
+    volunteersCollection.insertOne(events).then(result => {
       res.send(result);
       console.log(result.insertedCount);
     });
@@ -62,7 +61,7 @@ MongoClient.connect(uri, { useUnifiedTopology: true }, function (err, client) {
 
   //getEvents......
   app.get("/getEvents", (req, res) => {
-    productsCollection
+    volunteersCollection
       .find({ email: req.query.email })
       .toArray((err, documents) => {
         res.send(documents);
@@ -71,14 +70,14 @@ MongoClient.connect(uri, { useUnifiedTopology: true }, function (err, client) {
 
   //allEvents .....
   app.get("/allEvents", (req, res) => {
-    productsCollection.find({}).toArray((err, documents) => {
+    volunteersCollection.find({}).toArray((err, documents) => {
       res.send(documents);
     });
   });
 
   //delete event ....
   app.delete("/delete/:id", (req, res) => {
-    productsCollection
+    volunteersCollection
       .deleteOne({
         _id: ObjectId(req.params.id),
       })
@@ -94,4 +93,4 @@ app.get("/", (req, res) => {
   res.send("Welcome to our volunteer network");
 });
 
-app.listen(process.env.PORT || 7000);
+app.listen(process.env.PORT || port);
